@@ -112,14 +112,7 @@ public class RpcServiceConfiguration implements BeanPostProcessor, ApplicationCo
             resource.close();
         }
         //关闭socket服务
-        if (nettyConfig.getBoss()!=null){
-            nettyConfig.getBoss().shutdownGracefully();
-            logger.debug("socket boss close successful!");
-        }
-        if (nettyConfig.getWorker()!=null){
-            nettyConfig.getWorker().shutdownGracefully();
-            logger.debug("socket worker close successful!");
-        }
+        nettyConfig.close();
         //关闭redis连接池
         if (jedisPool!=null&&!jedisPool.isClosed()){
             jedisPool.close();

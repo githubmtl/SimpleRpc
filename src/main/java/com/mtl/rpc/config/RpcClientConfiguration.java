@@ -2,7 +2,10 @@ package com.mtl.rpc.config;
 
 import com.mtl.rpc.RandomServerSelector;
 import com.mtl.rpc.ServerSelector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
@@ -16,7 +19,8 @@ import org.springframework.context.ApplicationContextAware;
  * @email 92317919@qq.com
  * @dateTime 2019/05/03 13:03
  */
-public class RpcClientConfiguration implements BeanDefinitionRegistryPostProcessor, ApplicationContextAware {
+public class RpcClientConfiguration implements BeanDefinitionRegistryPostProcessor, ApplicationContextAware, DisposableBean {
+    private static Logger logger= LoggerFactory.getLogger(RpcClientConfiguration.class);
     private NettyConfig nettyConfig;
     private RedisRegistCenterConfig registCenterConfig;
     private ServerSelector serverSelector=new RandomServerSelector();
@@ -40,6 +44,12 @@ public class RpcClientConfiguration implements BeanDefinitionRegistryPostProcess
     @Override
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
 
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        //关闭socket服务
+        nettyConfig.close();
     }
 
     public String[] getBasePachage() {

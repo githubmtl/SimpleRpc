@@ -209,4 +209,17 @@ public class NettyConfig {
             throw new AppException("connect server["+ip+":"+port+"] error!",ie);
         }
     }
+
+    protected void close(){
+        if (this.getBoss()!=null){
+            this.getBoss().shutdownGracefully();
+            this.setBoss(null);
+            logger.debug("socket boss close successful!");
+        }
+        if (this.getWorker()!=null){
+            this.getWorker().shutdownGracefully();
+            this.setWorker(null);
+            logger.debug("socket worker close successful!");
+        }
+    }
 }
