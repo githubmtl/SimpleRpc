@@ -26,5 +26,14 @@ public class Constant {
     public static final int INVOKE_THREADPOOL_K_L=60;
     //IP prot分隔符
     public static final String IpAndPortSep="_";
+    //channel TimeOut Attr Key
     public static final String HEARTBEAT_TIME="HEARTBEAT_TIME";
+    //默认参数：服务和redis注册中心之间保持心跳的时间，也是redis中服务的过期时间
+    public static final int REDIS_EXPIRE_SECONDS=60;
+    //redis连接超时时间
+    public static final int REDIS_CONNECT_TIME_OUT=30000;
+    //redis默认端口
+    public static final int REDIS_DEFAULT_PORT=6379;
+    //redis默认IP
+    public static final String REDIS_DEFAULT_IP="127.0.0.1";
 }

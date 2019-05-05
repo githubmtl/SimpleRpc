@@ -1,5 +1,7 @@
 package com.mtl.rpc;
 
+import com.mtl.rpc.message.Request;
+
 import java.util.List;
 
 /**
@@ -10,5 +12,5 @@ import java.util.List;
  * @dateTime 2019/05/03 16:23
  */
 public interface ServerSelector  {
-    public ServerInfo select(List<ServerInfo> serverList);
+    public ServerInfo select(List<ServerInfo> serverList, Request request);
 }

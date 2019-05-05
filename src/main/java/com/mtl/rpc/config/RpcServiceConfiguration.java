@@ -13,6 +13,8 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
 import java.net.InetAddress;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * 说明：服务整体配置类
@@ -32,6 +34,8 @@ public class RpcServiceConfiguration implements BeanPostProcessor, ApplicationCo
     //服务监听端口
     private int prot;
     private JedisPool jedisPool;
+    private volatile boolean isRegisted=false;
+
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
         return bean;
@@ -54,13 +58,37 @@ public class RpcServiceConfiguration implements BeanPostProcessor, ApplicationCo
                 try {
                     Long sadd = resource.sadd(Constant.LOCAL_ADRESS, name);
                     if (sadd>0){
-                        logger.debug("{0} server is published!",clazz.getName());
+                        logger.debug("{} server is published!",clazz.getName());
+                        //如果有一个服务已经注册，则开始轮询发送expire命令
+                        if (!isRegisted){
+                            Timer timer=new Timer(true);
+                            timer.scheduleAtFixedRate(new TimerTask() {
+                                @Override
+                                public void run() {
+                                    Jedis jedis=null;
+                                    try {
+                                        jedis=jedisPool.getResource();
+                                        Long expire = jedis.expire(Constant.LOCAL_ADRESS, registCenterConfig.getExpireSeconds());
+                                        if (expire>0){
+                                            logger.debug("[{}] server send expire command successful!",Constant.LOCAL_ADRESS);
+                                        }
+                                    }catch (Exception e){
+                                        logger.error("server send expire command error!", e);
+                                    }finally {
+                                        if (jedis!=null){
+                                            jedis.close();
+                                        }
+                                    }
+                                }
+                            }, 0,registCenterConfig.getExpireSeconds()*800);
+                            isRegisted=true;
+                        }
                     }
                 }finally {
                     resource.close();
                 }
             }else{
-                logger.warn("{0} has more one interface or no interface!",clazz.getName());
+                logger.warn("{} has more one interface or no interface!",clazz.getName());
             }
         }
         return bean;
@@ -68,7 +96,6 @@ public class RpcServiceConfiguration implements BeanPostProcessor, ApplicationCo
 
     @Override
     public void afterPropertiesSet(){
-        logger.debug("enter RpcServiceConfiguration init()");
         if (nettyConfig==null){
             nettyConfig=new NettyConfig();
         }
@@ -90,7 +117,7 @@ public class RpcServiceConfiguration implements BeanPostProcessor, ApplicationCo
             Constant.LOCAL_ADRESS=lcoalAdress;
         }catch (Exception e){
             e.printStackTrace();
-            logger.error("添加本机地址到服务器列表错误！",e);
+            logger.error("add server to redis server_list error!",e);
             jedisPool.close();
             System.exit(-1);
         }finally {
@@ -102,7 +129,6 @@ public class RpcServiceConfiguration implements BeanPostProcessor, ApplicationCo
 
     @Override
     public void destroy(){
-        logger.debug("enter RpcServiceConfiguration destroy()");
         //从注册中心去掉服务
         Jedis resource = jedisPool.getResource();
         try {

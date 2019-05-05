@@ -28,7 +28,7 @@ public class ClientJsonDecoder extends MessageToMessageDecoder<String> {
             list.add(resp);
         }catch (Exception e){
             logger.error("json parse error! channel :"+channelHandlerContext.channel()+"\nresponseString:"+s,e);
-            throw new AppException("client parse json error!{0}"+s);
+            throw new AppException("client parse json error!{}"+s);
         }
     }
 }

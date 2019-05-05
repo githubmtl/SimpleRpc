@@ -55,7 +55,7 @@ public class InvokeHandler extends SimpleChannelInboundHandler<RequestImpl> {
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, RequestImpl request) throws Exception {
         if (request.getMessageType()== MessageType.HEARTBEAT){//如果是心跳。直接返回
-            logger.debug("{0} heartbeat successful!",channelHandlerContext.channel());
+            logger.debug("{} heartbeat successful!",channelHandlerContext.channel());
             ResponseImpl response=new ResponseImpl(request.getRequestId(), ResponseStatus.OK);
             response.setMessageType(request.getMessageType());
             channelHandlerContext.channel().writeAndFlush(response);
@@ -73,11 +73,13 @@ public class InvokeHandler extends SimpleChannelInboundHandler<RequestImpl> {
 
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-        IdleStateEvent e = (IdleStateEvent) evt;
-        IdleState state = e.state();
-        if (state==IdleState.READER_IDLE){
-            logger.error("channel {0} timeout!will be close it!",ctx.channel());
-            ctx.close();
+        if (evt instanceof IdleStateEvent){
+            IdleStateEvent e = (IdleStateEvent) evt;
+            IdleState state = e.state();
+            if (state==IdleState.READER_IDLE){
+                logger.error("channel {} timeout!will be close it!",ctx.channel());
+                ctx.close();
+            }
         }
     }
 

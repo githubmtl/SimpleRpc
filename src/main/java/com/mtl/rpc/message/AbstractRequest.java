@@ -36,6 +36,7 @@ public class AbstractRequest implements Request {
         return clazzs;
     }
 
+    @Override
     public String getItfName() {
         return itfName;
     }
@@ -44,6 +45,7 @@ public class AbstractRequest implements Request {
         this.itfName = itfName;
     }
 
+    @Override
     public String getMethodName() {
         return methodName;
     }
@@ -52,6 +54,7 @@ public class AbstractRequest implements Request {
         this.methodName = methodName;
     }
 
+    @Override
     public Object[] getArgs() {
         return args;
     }

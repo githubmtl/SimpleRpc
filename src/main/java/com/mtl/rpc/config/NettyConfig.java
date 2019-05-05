@@ -160,7 +160,7 @@ public class NettyConfig {
                         }
                     });
                     ChannelFuture future = serverBootstrap.bind(port).sync();
-                    logger.debug("start socket server successful! port: {0}",port);
+                    logger.debug("start socket server successful! port: {}",port);
                     ChannelFuture sync = future.channel().closeFuture().sync();
                 } catch (Exception e) {
                     logger.error("init socket server failed!", e);
@@ -211,6 +211,7 @@ public class NettyConfig {
     }
 
     protected void close(){
+        logger.debug("enter nettyConfig close!");
         if (this.getBoss()!=null){
             this.getBoss().shutdownGracefully();
             this.setBoss(null);

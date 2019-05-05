@@ -1,6 +1,7 @@
 package com.mtl.rpc;
 
 import com.mtl.rpc.config.Constant;
+import com.mtl.rpc.message.Response;
 import com.mtl.rpc.message.ResponseImpl;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -29,7 +30,7 @@ public class ServerInfo {
     //保存所有的服务信息，key是ip_port，value是对应的其连接
     public static ConcurrentHashMap<String, Channel> serverChannels=new ConcurrentHashMap<>();
     //用于临时存放响应消息
-    public static ConcurrentHashMap<String, SynchronousQueue<ResponseImpl>> msgTransferMap=new ConcurrentHashMap<>(512);
+    public static ConcurrentHashMap<String, SynchronousQueue<Response>> msgTransferMap=new ConcurrentHashMap<>(512);
 
     public ServerInfo(String ip, int port) {
         this.ip = ip;

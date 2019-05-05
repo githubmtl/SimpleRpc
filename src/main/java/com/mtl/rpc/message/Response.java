@@ -10,6 +10,8 @@ import com.mtl.rpc.exception.AppException;
  * @dateTime 2019/05/01 13:30
  */
 public interface Response {
-    //返回真正的方法返回值
+    /**
+     * 返回真正的方法返回值
+     */
     public Object returnObj() throws AppException;
 }

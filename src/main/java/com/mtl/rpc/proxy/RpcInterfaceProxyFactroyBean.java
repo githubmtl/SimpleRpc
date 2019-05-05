@@ -70,6 +70,9 @@ public class RpcInterfaceProxyFactroyBean<T> implements FactoryBean {
                 //如果服务列表没有获取过，则从redis服务器中获取
                 if (!ServerInfo.serverNameMap.containsKey(server)){
                     serverNames = resource.smembers(server);
+                    if (serverNames==null||serverNames.size()==0){
+                        resource.srem(Constant.REDIS_SERVER_LIST, server);
+                    }
                     ServerInfo.serverNameMap.put(server,serverNames);
                 }
                 if (serverNames!=null&&serverNames.contains(itfClass.getName())){
@@ -129,5 +132,9 @@ public class RpcInterfaceProxyFactroyBean<T> implements FactoryBean {
 
     public void setRegistCenterConfig(RedisRegistCenterConfig registCenterConfig) {
         this.registCenterConfig = registCenterConfig;
+    }
+
+    public static JedisPool getJedisPool() {
+        return jedisPool;
     }
 }

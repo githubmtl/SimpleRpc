@@ -4,6 +4,7 @@ import com.mtl.rpc.ServerInfo;
 import com.mtl.rpc.config.Constant;
 import com.mtl.rpc.message.MessageType;
 import com.mtl.rpc.message.RequestImpl;
+import com.mtl.rpc.message.Response;
 import com.mtl.rpc.message.ResponseImpl;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -37,8 +38,8 @@ public class ResponseHandler extends SimpleChannelInboundHandler<ResponseImpl> {
                 logger.debug("recrive heartbeat response successful!");
             }
         }else if (response.getMessageType()==MessageType.SERVER){
-            logger.debug("recrive message response successful!messageId={0}"+response.getRequestId());
-            SynchronousQueue<ResponseImpl> queue = ServerInfo.msgTransferMap.get(response.getRequestId());
+            logger.debug("recrive message response successful!messageId={}"+response.getRequestId());
+            SynchronousQueue<Response> queue = ServerInfo.msgTransferMap.get(response.getRequestId());
             queue.put(response);
         }
     }
