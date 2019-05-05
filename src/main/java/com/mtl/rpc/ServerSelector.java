@@ -12,5 +12,11 @@ import java.util.List;
  * @dateTime 2019/05/03 16:23
  */
 public interface ServerSelector  {
+    /**
+     * 选择一台服务器进行请求
+     * @param serverList
+     * @param request
+     * @return
+     */
     public ServerInfo select(List<ServerInfo> serverList, Request request);
 }
