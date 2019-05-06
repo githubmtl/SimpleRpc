@@ -1,6 +1,8 @@
 package com.mtl.rpc.config;
 
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
@@ -14,6 +16,8 @@ import java.util.Set;
  * @dateTime 2019/05/01 11:14
  */
 public class RedisRegistCenterConfig {
+    private static final Logger logger= LoggerFactory.getLogger(RedisRegistCenterConfig.class);
+    private static volatile JedisPool jedisPool;
     private String ip=Constant.REDIS_DEFAULT_IP;
     private int port=Constant.REDIS_DEFAULT_PORT;
     private String password;
@@ -71,10 +75,18 @@ public class RedisRegistCenterConfig {
         this.expireSeconds = expireSeconds;
     }
 
+    public static JedisPool getJedisPool() {
+        return jedisPool;
+    }
+
     public JedisPool init(){
-        return new JedisPool(this.getPoolConfig(),
+        if (jedisPool!=null){
+            return jedisPool;
+        }
+        RedisRegistCenterConfig.jedisPool=new JedisPool(this.getPoolConfig(),
                 this.getIp(),this.getPort(),
                 this.getTimeOut(),this.getPassword());
+        return jedisPool;
     }
 
 }

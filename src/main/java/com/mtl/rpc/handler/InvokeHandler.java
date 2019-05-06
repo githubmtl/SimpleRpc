@@ -89,4 +89,14 @@ public class InvokeHandler extends SimpleChannelInboundHandler<RequestImpl> {
         ctx.close();
     }
 
+
+    /**
+     * 关闭业务线程池
+     */
+    public static void closeThreadPool(){
+        if (executor!=null){
+            executor.shutdown();
+            logger.debug("handler business threadPool closed!");
+        }
+    }
 }

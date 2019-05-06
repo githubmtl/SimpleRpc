@@ -1,6 +1,7 @@
 package com.mtl.rpc.config;
 
 import com.mtl.rpc.annotation.RpcService;
+import com.mtl.rpc.handler.InvokeHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -33,7 +34,8 @@ public class RpcServiceConfiguration implements BeanPostProcessor, ApplicationCo
     private RedisRegistCenterConfig registCenterConfig;
     //服务监听端口
     private int prot;
-    private JedisPool jedisPool;
+    //不断去轮询redis注册中心，以保持服务和注册中心间的连接
+    private Timer timer;
     private volatile boolean isRegisted=false;
 
     @Override
@@ -54,33 +56,15 @@ public class RpcServiceConfiguration implements BeanPostProcessor, ApplicationCo
             if (interfaces!=null&&interfaces.length==1){
                 Class<?> ift = interfaces[0];
                 String name = ift.getName();
-                Jedis resource = jedisPool.getResource();
+                Jedis resource = RedisRegistCenterConfig.getJedisPool().getResource();
                 try {
                     Long sadd = resource.sadd(Constant.LOCAL_ADRESS, name);
                     if (sadd>0){
                         logger.debug("{} server is published!",clazz.getName());
                         //如果有一个服务已经注册，则开始轮询发送expire命令
                         if (!isRegisted){
-                            Timer timer=new Timer(true);
-                            timer.scheduleAtFixedRate(new TimerTask() {
-                                @Override
-                                public void run() {
-                                    Jedis jedis=null;
-                                    try {
-                                        jedis=jedisPool.getResource();
-                                        Long expire = jedis.expire(Constant.LOCAL_ADRESS, registCenterConfig.getExpireSeconds());
-                                        if (expire>0){
-                                            logger.debug("[{}] server send expire command successful!",Constant.LOCAL_ADRESS);
-                                        }
-                                    }catch (Exception e){
-                                        logger.error("server send expire command error!", e);
-                                    }finally {
-                                        if (jedis!=null){
-                                            jedis.close();
-                                        }
-                                    }
-                                }
-                            }, 0,registCenterConfig.getExpireSeconds()*800);
+                            timer=new Timer(true);
+                            timer.scheduleAtFixedRate(new ExpireTimerTask(registCenterConfig), 0,registCenterConfig.getExpireSeconds()*800);
                             isRegisted=true;
                         }
                     }
@@ -106,11 +90,11 @@ public class RpcServiceConfiguration implements BeanPostProcessor, ApplicationCo
 
         //初始化redis连接池
         if (registCenterConfig==null){
-            jedisPool=new JedisPool();
-        }else{
-            jedisPool=registCenterConfig.init();
+            registCenterConfig=new RedisRegistCenterConfig();
         }
-        Jedis resource = jedisPool.getResource();
+        registCenterConfig.init();
+
+        Jedis resource = RedisRegistCenterConfig.getJedisPool().getResource();
         try {
             String lcoalAdress = InetAddress.getLocalHost().getHostAddress()+Constant.IpAndPortSep+prot;
             resource.sadd(Constant.REDIS_SERVER_LIST, lcoalAdress);
@@ -118,7 +102,7 @@ public class RpcServiceConfiguration implements BeanPostProcessor, ApplicationCo
         }catch (Exception e){
             e.printStackTrace();
             logger.error("add server to redis server_list error!",e);
-            jedisPool.close();
+            RedisRegistCenterConfig.getJedisPool().close();
             System.exit(-1);
         }finally {
             resource.close();
@@ -130,7 +114,7 @@ public class RpcServiceConfiguration implements BeanPostProcessor, ApplicationCo
     @Override
     public void destroy(){
         //从注册中心去掉服务
-        Jedis resource = jedisPool.getResource();
+        Jedis resource = RedisRegistCenterConfig.getJedisPool().getResource();
         try {
             resource.srem(Constant.REDIS_SERVER_LIST,Constant.LOCAL_ADRESS);
             resource.del(Constant.LOCAL_ADRESS);
@@ -140,10 +124,14 @@ public class RpcServiceConfiguration implements BeanPostProcessor, ApplicationCo
         //关闭socket服务
         nettyConfig.close();
         //关闭redis连接池
-        if (jedisPool!=null&&!jedisPool.isClosed()){
-            jedisPool.close();
+        if (RedisRegistCenterConfig.getJedisPool()!=null&&!RedisRegistCenterConfig.getJedisPool().isClosed()){
+            RedisRegistCenterConfig.getJedisPool().close();
             logger.debug("destroy jedisPool successful！");
         }
+        //关闭轮询定时任务
+        timer.cancel();
+        //关闭业务线程池
+        InvokeHandler.closeThreadPool();
     }
 
     public NettyConfig getNettyConfig() {
@@ -172,5 +160,32 @@ public class RpcServiceConfiguration implements BeanPostProcessor, ApplicationCo
 
     public static ApplicationContext getApplicationContext(){
         return applicationContext;
+    }
+
+    /**
+     * 服务器轮询请求注册中心以保持连接
+     */
+    private static class ExpireTimerTask extends TimerTask{
+        private RedisRegistCenterConfig registCenterConfig;
+        public ExpireTimerTask(RedisRegistCenterConfig registCenterConfig) {
+            this.registCenterConfig=registCenterConfig;
+        }
+        @Override
+        public void run() {
+            Jedis jedis=null;
+            try {
+                jedis=RedisRegistCenterConfig.getJedisPool().getResource();
+                Long expire = jedis.expire(Constant.LOCAL_ADRESS, registCenterConfig.getExpireSeconds());
+                if (expire>0){
+                    logger.debug("[{}] server send expire command successful!",Constant.LOCAL_ADRESS);
+                }
+            }catch (Exception e){
+                logger.error("server send expire command error!", e);
+            }finally {
+                if (jedis!=null){
+                    jedis.close();
+                }
+            }
+        }
     }
 }

@@ -28,7 +28,6 @@ public class RpcInterfaceProxyFactroyBean<T> implements FactoryBean {
     private Class<T> itfClass;
     private NettyConfig nettyConfig;
     private RedisRegistCenterConfig registCenterConfig;
-    private static JedisPool jedisPool=null;
 
     public RpcInterfaceProxyFactroyBean(Class<T> itfClass) {
         this.itfClass = itfClass;
@@ -41,16 +40,15 @@ public class RpcInterfaceProxyFactroyBean<T> implements FactoryBean {
             nettyConfig=new NettyConfig();
             RpcClientConfiguration.applicationContext.getBean(RpcClientConfiguration.class).setNettyConfig(nettyConfig);
         }
-        if (jedisPool==null){
+        if (RedisRegistCenterConfig.getJedisPool()==null){
             if (registCenterConfig==null){
-                jedisPool=new JedisPool();
-            }else{
-                jedisPool=registCenterConfig.init();
+                registCenterConfig=new RedisRegistCenterConfig();
             }
+            registCenterConfig.init();
         }
         //获取可以提供该接口服务的IP地址和端口
         List<ServerInfo> serverList=new ArrayList<>();
-        Jedis resource = jedisPool.getResource();
+        Jedis resource = RedisRegistCenterConfig.getJedisPool().getResource();
         try {
             synchronized (ServerInfo.isInit){
                 //如果服务器列表没有获取过，则先在redis获取服务器列表
@@ -134,7 +132,4 @@ public class RpcInterfaceProxyFactroyBean<T> implements FactoryBean {
         this.registCenterConfig = registCenterConfig;
     }
 
-    public static JedisPool getJedisPool() {
-        return jedisPool;
-    }
 }

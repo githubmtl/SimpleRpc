@@ -35,7 +35,7 @@ public class ResponseHandler extends SimpleChannelInboundHandler<ResponseImpl> {
             if (attr.get()!=null){
                 Integer times = (Integer) attr.get();
                 attr.set(--times);
-                logger.debug("recrive heartbeat response successful!");
+                logger.debug("receive heartbeat and response successful!");
             }
         }else if (response.getMessageType()==MessageType.SERVER){
             logger.debug("recrive message response successful!messageId={}"+response.getRequestId());

@@ -2,6 +2,7 @@ package com.mtl.rpc;
 
 import com.mtl.rpc.config.Constant;
 import com.mtl.rpc.config.NettyConfig;
+import com.mtl.rpc.config.RedisRegistCenterConfig;
 import com.mtl.rpc.config.RpcClientConfiguration;
 import com.mtl.rpc.exception.AppException;
 import com.mtl.rpc.message.Request;
@@ -31,7 +32,7 @@ public abstract class AbstractSelector implements ServerSelector {
         if (serverList==null||serverList.size()==0){//重新扫描注册中心，并重新连接服务
             RpcClientConfiguration clientConfiguration = RpcClientConfiguration.applicationContext.getBean(RpcClientConfiguration.class);
             NettyConfig nettyConfig = clientConfiguration.getNettyConfig();
-            JedisPool jedisPool = RpcInterfaceProxyFactroyBean.getJedisPool();
+            JedisPool jedisPool = RedisRegistCenterConfig.getJedisPool();
             Jedis resource = jedisPool.getResource();
             try {
                 Set<String> servers = resource.smembers(Constant.REDIS_SERVER_LIST);

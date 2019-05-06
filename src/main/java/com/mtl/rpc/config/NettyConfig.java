@@ -183,6 +183,7 @@ public class NettyConfig {
         NioEventLoopGroup worker=null;
         if (this.getWorker()==null) worker=new NioEventLoopGroup(workerGroupCount);
 
+        this.setWorker(worker);
         Bootstrap bootstrap=new Bootstrap();
         bootstrap.group(worker).channel(NioSocketChannel.class).option(ChannelOption.TCP_NODELAY,true)
                 .option(ChannelOption.SO_KEEPALIVE,true).option(ChannelOption.CONNECT_TIMEOUT_MILLIS,1000*20);
@@ -211,7 +212,6 @@ public class NettyConfig {
     }
 
     protected void close(){
-        logger.debug("enter nettyConfig close!");
         if (this.getBoss()!=null){
             this.getBoss().shutdownGracefully();
             this.setBoss(null);
