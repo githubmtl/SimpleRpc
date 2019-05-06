@@ -180,10 +180,10 @@ public class NettyConfig {
 
     //客户端连接服务初始化
     public synchronized void clientInit(String ip,int port){
-        NioEventLoopGroup worker=null;
+        RpcClientConfiguration rpcClientConfiguration = RpcClientConfiguration.applicationContext.getBean(RpcClientConfiguration.class);
+        NioEventLoopGroup worker=rpcClientConfiguration.getNettyConfig().getWorker();
         if (this.getWorker()==null) worker=new NioEventLoopGroup(workerGroupCount);
-
-        this.setWorker(worker);
+        rpcClientConfiguration.getNettyConfig().setWorker(worker);
         Bootstrap bootstrap=new Bootstrap();
         bootstrap.group(worker).channel(NioSocketChannel.class).option(ChannelOption.TCP_NODELAY,true)
                 .option(ChannelOption.SO_KEEPALIVE,true).option(ChannelOption.CONNECT_TIMEOUT_MILLIS,1000*20);
@@ -212,6 +212,7 @@ public class NettyConfig {
     }
 
     protected void close(){
+        System.out.println(this);
         if (this.getBoss()!=null){
             this.getBoss().shutdownGracefully();
             this.setBoss(null);
@@ -219,7 +220,6 @@ public class NettyConfig {
         }
         if (this.getWorker()!=null){
             this.getWorker().shutdownGracefully();
-            this.setWorker(null);
             logger.debug("socket worker close successful!");
         }
     }

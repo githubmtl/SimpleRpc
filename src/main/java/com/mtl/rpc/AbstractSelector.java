@@ -13,10 +13,7 @@ import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * 说明：检查ServerLost并且可重连的selector
@@ -29,6 +26,27 @@ public abstract class AbstractSelector implements ServerSelector {
     private static final Logger logger= LoggerFactory.getLogger(RandomServerSelector.class);
     @Override
     public  ServerInfo select(List<ServerInfo> serverList, Request request){
+        if (ServerInfo.newServerNameMap.size()>0){//有新服务同步
+            Iterator<Map.Entry<String, Set<String>>> iterator = ServerInfo.newServerNameMap.entrySet().iterator();
+            while(iterator.hasNext()){
+                Map.Entry<String, Set<String>> entry = iterator.next();
+                Set<String> serverNames = entry.getValue();
+                if (serverNames.contains(request.getItfName())){
+                    String[] strings = StringUtils.analysisIpAndPort(entry.getKey());
+                    RpcClientConfiguration clientConfiguration = RpcClientConfiguration.applicationContext.getBean(RpcClientConfiguration.class);
+                    NettyConfig nettyConfig = clientConfiguration.getNettyConfig();
+                    try {
+                        nettyConfig.clientInit(strings[0],Integer.parseInt(strings[1]));
+                    }catch (Exception e){
+                        logger.error("connect new server "+ Arrays.toString(strings)+" error!", e);
+                        continue;
+                    }
+                    ServerInfo.serverNameMap.put(entry.getKey(), entry.getValue());
+                    iterator.remove();
+                    serverList.add(new ServerInfo(strings[0], Integer.parseInt(strings[1])));
+                }
+            }
+        }
         if (serverList==null||serverList.size()==0){//重新扫描注册中心，并重新连接服务
             RpcClientConfiguration clientConfiguration = RpcClientConfiguration.applicationContext.getBean(RpcClientConfiguration.class);
             NettyConfig nettyConfig = clientConfiguration.getNettyConfig();

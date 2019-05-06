@@ -99,10 +99,12 @@ public abstract class AbstractResponse implements Response {
         return content;
     }
 
+    @Override
     public ResponseStatus getStatus() {
         return status;
     }
 
+    @Override
     public String getErrorMsg() {
         return errorMsg;
     }
@@ -131,6 +133,7 @@ public abstract class AbstractResponse implements Response {
         this.arrayType = arrayType;
     }
 
+    @Override
     public MessageType getMessageType() {
         return messageType;
     }

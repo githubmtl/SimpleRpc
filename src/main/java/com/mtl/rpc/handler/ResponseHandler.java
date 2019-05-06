@@ -38,7 +38,7 @@ public class ResponseHandler extends SimpleChannelInboundHandler<ResponseImpl> {
                 logger.debug("receive heartbeat and response successful!");
             }
         }else if (response.getMessageType()==MessageType.SERVER){
-            logger.debug("recrive message response successful!messageId={}"+response.getRequestId());
+            logger.debug("recrive message response successful!message={}"+response);
             SynchronousQueue<Response> queue = ServerInfo.msgTransferMap.get(response.getRequestId());
             queue.put(response);
         }
@@ -46,20 +46,23 @@ public class ResponseHandler extends SimpleChannelInboundHandler<ResponseImpl> {
 
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-        IdleState state = ((IdleStateEvent) evt).state();
-        if (state==IdleState.ALL_IDLE){//如果超过1分钟客户端和服务端没有通信，则发送心跳
-            Attribute<Object> attr = ctx.channel().attr(AttributeKey.valueOf(Constant.HEARTBEAT_TIME));
-            if (attr.get()==null){
-                attr.set(new Integer(0));
-            }
-            //已经发出去的心跳检查次数（未收到回复，收到回复将其值-1）
-            Integer times = (Integer) attr.get();
-            if (times<=3){//再次发送心跳
-                RequestImpl request=new RequestImpl(MessageType.HEARTBEAT);
-                ctx.channel().writeAndFlush(request).sync();
-                attr.set(++times);
-            }else{
-                //尝试重连
+        if (evt instanceof IdleStateEvent){
+            IdleState state = ((IdleStateEvent) evt).state();
+            if (state==IdleState.ALL_IDLE){//如果超过1分钟客户端和服务端没有通信，则发送心跳
+                Attribute<Object> attr = ctx.channel().attr(AttributeKey.valueOf(Constant.HEARTBEAT_TIME));
+                if (attr.get()==null){
+                    attr.set(new Integer(0));
+                }
+                //已经发出去的心跳检查次数（未收到回复，收到回复将其值-1）
+                Integer times = (Integer) attr.get();
+                if (times<=3){//再次发送心跳
+                    RequestImpl request=new RequestImpl(MessageType.HEARTBEAT);
+                    ctx.channel().writeAndFlush(request).sync();
+                    attr.set(++times);
+                }else{
+                    //关闭其连接
+                    ctx.close();
+                }
             }
         }
     }

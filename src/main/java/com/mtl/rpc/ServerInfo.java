@@ -27,6 +27,8 @@ public class ServerInfo {
     public static Set<String> serverList= Collections.synchronizedSet(new HashSet<>());
     //对应redis服务每台服务器提供的服务列表
     public static ConcurrentHashMap<String,Set<String>> serverNameMap=new ConcurrentHashMap<>();
+    //最新同步的服务列表
+    public static ConcurrentHashMap<String,Set<String>> newServerNameMap=new ConcurrentHashMap<>();
     //保存所有的服务信息，key是ip_port，value是对应的其连接
     public static ConcurrentHashMap<String, Channel> serverChannels=new ConcurrentHashMap<>();
     //用于临时存放响应消息

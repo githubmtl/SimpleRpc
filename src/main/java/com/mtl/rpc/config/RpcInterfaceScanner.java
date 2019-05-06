@@ -23,12 +23,8 @@ import java.util.Set;
  * @dateTime 2019/05/03 13:05
  */
 public class RpcInterfaceScanner extends ClassPathBeanDefinitionScanner {
-    private NettyConfig nettyConfig;
-    private RedisRegistCenterConfig registCenterConfig;
-    public RpcInterfaceScanner(BeanDefinitionRegistry registry,NettyConfig nettyConfig,RedisRegistCenterConfig redisRegistCenterConfig) {
+    public RpcInterfaceScanner(BeanDefinitionRegistry registry) {
         super(registry, false);
-        this.nettyConfig=nettyConfig;
-        this.registCenterConfig=redisRegistCenterConfig;
     }
 
     @Override
@@ -42,8 +38,6 @@ public class RpcInterfaceScanner extends ClassPathBeanDefinitionScanner {
                 beanDefinition.getConstructorArgumentValues().addGenericArgumentValue(beanDefinition.getBeanClassName());
                 //通过FactoryBean创建
                 beanDefinition.setBeanClass(RpcInterfaceProxyFactroyBean.class);
-                beanDefinition.getPropertyValues().add("nettyConfig",nettyConfig);
-                beanDefinition.getPropertyValues().add("registCenterConfig",registCenterConfig);
                 beanDefinition.setAutowireMode(GenericBeanDefinition.AUTOWIRE_BY_TYPE);
             }
         }
@@ -65,19 +59,4 @@ public class RpcInterfaceScanner extends ClassPathBeanDefinitionScanner {
         });
     }
 
-    public NettyConfig getNettyConfig() {
-        return nettyConfig;
-    }
-
-    public void setNettyConfig(NettyConfig nettyConfig) {
-        this.nettyConfig = nettyConfig;
-    }
-
-    public RedisRegistCenterConfig getRegistCenterConfig() {
-        return registCenterConfig;
-    }
-
-    public void setRegistCenterConfig(RedisRegistCenterConfig registCenterConfig) {
-        this.registCenterConfig = registCenterConfig;
-    }
 }

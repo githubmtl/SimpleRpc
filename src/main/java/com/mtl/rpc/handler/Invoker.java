@@ -1,6 +1,7 @@
 package com.mtl.rpc.handler;
 
 import com.alibaba.fastjson.JSON;
+import com.mtl.rpc.message.MessageType;
 import com.mtl.rpc.message.RequestImpl;
 import com.mtl.rpc.message.ResponseImpl;
 import com.mtl.rpc.message.ResponseStatus;
@@ -10,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Collection;
 
 /**
@@ -74,16 +76,19 @@ public class Invoker implements Runnable {
             logger.error("server not found error! channel:"+handlerContext.channel()+"\n RequestMessage:"+request,e);
             ResponseImpl response=new ResponseImpl(request.getRequestId(), ResponseStatus.ERROR);
             response.setErrorMsg("server [" +request.getItfName()+ "] not found!");
+            response.setMessageType(MessageType.SERVER);
             handlerContext.channel().writeAndFlush(response);
         }catch (NoSuchMethodException me){
             logger.error("method not found error! channel:"+handlerContext.channel()+"\n RequestMessage:"+request,me);
             ResponseImpl response=new ResponseImpl(request.getRequestId(), ResponseStatus.ERROR);
-            response.setErrorMsg("method [" +request.getMethodName()+ "] not found!");
+            response.setErrorMsg("method [" +request.getMethodName()+ "] args["+ Arrays.toString(request.getArgs()) +"] not found!");
+            response.setMessageType(MessageType.SERVER);
             handlerContext.channel().writeAndFlush(response);
         }catch (Exception ee){
             logger.error("method invoke error! channel:"+handlerContext.channel()+"\n RequestMessage:"+request,ee);
             ResponseImpl response=new ResponseImpl(request.getRequestId(), ResponseStatus.ERROR);
             response.setErrorMsg("method [" +request.getMethodName()+ "] invoke error!"+ee.toString());
+            response.setMessageType(MessageType.SERVER);
             handlerContext.channel().writeAndFlush(response);
         }
     }

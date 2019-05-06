@@ -26,8 +26,6 @@ import java.util.Set;
  */
 public class RpcInterfaceProxyFactroyBean<T> implements FactoryBean {
     private Class<T> itfClass;
-    private NettyConfig nettyConfig;
-    private RedisRegistCenterConfig registCenterConfig;
 
     public RpcInterfaceProxyFactroyBean(Class<T> itfClass) {
         this.itfClass = itfClass;
@@ -35,14 +33,18 @@ public class RpcInterfaceProxyFactroyBean<T> implements FactoryBean {
 
     @Override
     public T getObject() throws Exception {
+        RpcClientConfiguration rpcClientConfiguration = RpcClientConfiguration.applicationContext.getBean(RpcClientConfiguration.class);
+        NettyConfig nettyConfig=rpcClientConfiguration.getNettyConfig();
+        RedisRegistCenterConfig registCenterConfig=rpcClientConfiguration.getRegistCenterConfig();
         //初始化配置
         if (nettyConfig==null){
             nettyConfig=new NettyConfig();
-            RpcClientConfiguration.applicationContext.getBean(RpcClientConfiguration.class).setNettyConfig(nettyConfig);
+            rpcClientConfiguration.setNettyConfig(nettyConfig);
         }
         if (RedisRegistCenterConfig.getJedisPool()==null){
             if (registCenterConfig==null){
                 registCenterConfig=new RedisRegistCenterConfig();
+                rpcClientConfiguration.setRegistCenterConfig(registCenterConfig);
             }
             registCenterConfig.init();
         }
@@ -64,7 +66,7 @@ public class RpcInterfaceProxyFactroyBean<T> implements FactoryBean {
             }
             //循环获取每台服务里面的服务列表
             for (String server : ServerInfo.serverList) {
-                Set<String> serverNames=null;
+                Set<String> serverNames=ServerInfo.serverNameMap.get(server);
                 //如果服务列表没有获取过，则从redis服务器中获取
                 if (!ServerInfo.serverNameMap.containsKey(server)){
                     serverNames = resource.smembers(server);
@@ -116,20 +118,5 @@ public class RpcInterfaceProxyFactroyBean<T> implements FactoryBean {
         this.itfClass = itfClass;
     }
 
-    public NettyConfig getNettyConfig() {
-        return nettyConfig;
-    }
-
-    public void setNettyConfig(NettyConfig nettyConfig) {
-        this.nettyConfig = nettyConfig;
-    }
-
-    public RedisRegistCenterConfig getRegistCenterConfig() {
-        return registCenterConfig;
-    }
-
-    public void setRegistCenterConfig(RedisRegistCenterConfig registCenterConfig) {
-        this.registCenterConfig = registCenterConfig;
-    }
 
 }

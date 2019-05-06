@@ -10,6 +10,8 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextRefreshedEvent;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
@@ -24,7 +26,7 @@ import java.util.TimerTask;
  * @email 92317919@qq.com
  * @dateTime 2019/05/01 14:52
  */
-public class RpcServiceConfiguration implements BeanPostProcessor, ApplicationContextAware, InitializingBean, DisposableBean {
+public class RpcServiceConfiguration implements ApplicationListener<ContextRefreshedEvent>,BeanPostProcessor, ApplicationContextAware, InitializingBean, DisposableBean {
     private static Logger logger= LoggerFactory.getLogger(RpcServiceConfiguration.class);
 
     //SpringContext
@@ -34,6 +36,8 @@ public class RpcServiceConfiguration implements BeanPostProcessor, ApplicationCo
     private RedisRegistCenterConfig registCenterConfig;
     //服务监听端口
     private int prot;
+    //Spring容器是否已经启动完成
+    private volatile boolean contextStart=false;
     //不断去轮询redis注册中心，以保持服务和注册中心间的连接
     private Timer timer;
     private volatile boolean isRegisted=false;
@@ -46,6 +50,12 @@ public class RpcServiceConfiguration implements BeanPostProcessor, ApplicationCo
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         RpcServiceConfiguration.applicationContext=applicationContext;
+    }
+
+    @Override
+    public void onApplicationEvent(ContextRefreshedEvent event) {
+        contextStart=true;
+        logger.debug("server application Context is started!");
     }
 
     @Override
@@ -123,11 +133,6 @@ public class RpcServiceConfiguration implements BeanPostProcessor, ApplicationCo
         }
         //关闭socket服务
         nettyConfig.close();
-        //关闭redis连接池
-        if (RedisRegistCenterConfig.getJedisPool()!=null&&!RedisRegistCenterConfig.getJedisPool().isClosed()){
-            RedisRegistCenterConfig.getJedisPool().close();
-            logger.debug("destroy jedisPool successful！");
-        }
         //关闭轮询定时任务
         timer.cancel();
         //关闭业务线程池
@@ -162,6 +167,10 @@ public class RpcServiceConfiguration implements BeanPostProcessor, ApplicationCo
         return applicationContext;
     }
 
+    public boolean isContextStart() {
+        return contextStart;
+    }
+
     /**
      * 服务器轮询请求注册中心以保持连接
      */
@@ -188,4 +197,5 @@ public class RpcServiceConfiguration implements BeanPostProcessor, ApplicationCo
             }
         }
     }
+
 }

@@ -4,11 +4,9 @@ import com.mtl.rpc.ServerInfo;
 import com.mtl.rpc.ServerSelector;
 import com.mtl.rpc.config.RpcClientConfiguration;
 import com.mtl.rpc.exception.AppException;
-import com.mtl.rpc.message.MessageType;
-import com.mtl.rpc.message.Request;
-import com.mtl.rpc.message.RequestImpl;
-import com.mtl.rpc.message.Response;
+import com.mtl.rpc.message.*;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,6 +59,9 @@ public class ClientProxyInvocation implements InvocationHandler {
         }finally {
             ServerInfo.msgTransferMap.remove(request.getRequestId());
         }
+        if (response.getStatus()== ResponseStatus.ERROR){
+            throw new AppException(response.getErrorMsg());
+        }
         return response.returnObj();
     }
 
@@ -73,7 +74,11 @@ public class ClientProxyInvocation implements InvocationHandler {
             return false;
         }
         try {
-            channel.writeAndFlush(request);
+            ChannelFuture channelFuture = channel.writeAndFlush(request).sync();
+            if (!channelFuture.isSuccess()) {
+                serverList.remove(serverInfo);
+                return false;
+            }
         }catch (Exception e){
             logger.error("send request error,will close it!channel:"+channel, e);
             channel.close();

@@ -60,12 +60,19 @@ public class InvokeHandler extends SimpleChannelInboundHandler<RequestImpl> {
             response.setMessageType(request.getMessageType());
             channelHandlerContext.channel().writeAndFlush(response);
         }else if (request.getMessageType()== MessageType.SERVER){
+            RpcServiceConfiguration rpcServiceConfiguration = RpcServiceConfiguration.getApplicationContext().getBean(RpcServiceConfiguration.class);
+            //判断Spring服务是否已经启动
+            if (rpcServiceConfiguration==null||!rpcServiceConfiguration.isContextStart()){
+                ResponseImpl response=new ResponseImpl(request.getRequestId(),ResponseStatus.ERROR);
+                response.setErrorMsg("system has not started!,please try again later!");
+                channelHandlerContext.channel().writeAndFlush(response);
+            }
             try {
                 executor.submit(new Invoker(channelHandlerContext,request,RpcServiceConfiguration.getApplicationContext()));
             }catch (RejectedExecutionException re){
                 logger.error("server busy error! channel:"+channelHandlerContext.channel()+" \nRequestMessage:"+request,re);
                 ResponseImpl response=new ResponseImpl(request.getRequestId(),ResponseStatus.ERROR);
-                response.setErrorMsg(",please try again later!");
+                response.setErrorMsg("system busy,please try again later!");
                 channelHandlerContext.channel().writeAndFlush(response);
             }
         }
