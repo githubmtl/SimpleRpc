@@ -135,6 +135,7 @@ public class RpcClientConfiguration implements ApplicationListener<ContextRefres
                                 Set<String> serverNames = resource.smembers(smember);
                                 ServerInfo.serverList.add(smember);
                                 ServerInfo.newServerNameMap.put(smember, serverNames);
+                                logger.debug("同步到新的服务{},服务列表{}"+smember,serverNames);
                             }
                         }
                     }

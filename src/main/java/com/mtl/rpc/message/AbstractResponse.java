@@ -65,6 +65,8 @@ public abstract class AbstractResponse implements Response {
             try {
                 if (arrayFlag){
                     o= JSONArray.parseObject(content,arrayType);
+                }else if (collectionFlag){
+                    o=JSON.parseArray(content, responseType);
                 }else{
                     o=JSON.parseObject(content,responseType);
                 }

@@ -87,4 +87,12 @@ public class ServerInfo {
     public int hashCode() {
         return Objects.hash(ip, port);
     }
+
+    @Override
+    public String toString() {
+        return "ServerInfo{" +
+                "ip='" + ip + '\'' +
+                ", port=" + port +
+                '}';
+    }
 }

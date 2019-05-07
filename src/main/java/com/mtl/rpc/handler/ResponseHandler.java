@@ -70,6 +70,6 @@ public class ResponseHandler extends SimpleChannelInboundHandler<ResponseImpl> {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         logger.error("handl response error!",cause);
-        cause.printStackTrace();
+        ctx.close();
     }
 }
