@@ -1,5 +1,7 @@
 package com.mtl.rpc.message;
 
+import java.util.List;
+
 /**
  * 说明：
  *
@@ -11,10 +13,9 @@ public interface Request {
 
     /**
      * 获取远程调用方法参数类型
-     * @param args
      * @return
      */
-    Class<?>[] getParamClassType(Object[] args);
+    Class<?>[] getParamClassType();
 
     /**
      * 获取接口名称

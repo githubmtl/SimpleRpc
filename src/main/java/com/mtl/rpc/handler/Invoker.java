@@ -42,8 +42,9 @@ public class Invoker implements Runnable {
             Object bean = applicationContext.getBean(clazz);
             //获取实现类的class对象
             Class<?> implClass = bean.getClass();
+            logger.debug("");
             //获取请求方法的Method对象
-            Method method = implClass.getMethod(request.getMethodName(), request.getParamClassType(request.getArgs()));
+            Method method = implClass.getMethod(request.getMethodName(), request.getParamClassType());
             //通过反射执行其方法
             Object retObj = method.invoke(bean, request.getArgs());
             //组织返回对象
@@ -81,7 +82,7 @@ public class Invoker implements Runnable {
         }catch (NoSuchMethodException me){
             logger.error("method not found error! channel:"+handlerContext.channel()+"\n RequestMessage:"+request,me);
             ResponseImpl response=new ResponseImpl(request.getRequestId(), ResponseStatus.ERROR);
-            response.setErrorMsg("method [" +request.getMethodName()+ "] args["+ Arrays.toString(request.getArgs()) +"] not found!");
+            response.setErrorMsg("method [" +request.getMethodName()+ "] args["+ Arrays.toString(request.getParamClassType()) +"] not found!");
             response.setMessageType(MessageType.SERVER);
             handlerContext.channel().writeAndFlush(response);
         }catch (Exception ee){

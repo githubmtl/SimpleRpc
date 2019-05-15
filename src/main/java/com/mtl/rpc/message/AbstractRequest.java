@@ -1,8 +1,12 @@
 package com.mtl.rpc.message;
 
+import com.alibaba.fastjson.JSON;
+import com.mtl.rpc.exception.AppException;
 import com.mtl.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * 说明：Request的简单实现
@@ -25,13 +29,26 @@ public class AbstractRequest implements Request {
      */
     private Object[] args;
 
+    /**
+     * 参数的Json格式
+     */
+    private List<String> paramContents;
+
+    /**
+     * 方法参数的class全名
+     */
+    protected List<String> paramClassNames;
+
     @Override
-    public Class<?>[] getParamClassType(Object[] args) {
-        if (args==null||args.length==0) return null;
-        Class<?>[] clazzs=new Class[args.length];
-        for (int i = 0; i < args.length; i++) {
-            if (args[i]==null) throw new IllegalArgumentException("args can not be null! index :"+i);
-            clazzs[i]=args[i].getClass();
+    public Class<?>[] getParamClassType() {
+        if (paramClassNames==null||paramClassNames.size()==0) return null;
+        Class clazzs[]=new Class[paramClassNames.size()];
+        for (int i = 0; i < paramClassNames.size(); i++) {
+            try {
+                clazzs[i]=Class.forName(paramClassNames.get(i));
+            }catch (ClassNotFoundException e){
+                throw new AppException("param class ["+paramClassNames.get(i)+"] not found!");
+            }
         }
         return clazzs;
     }
@@ -54,13 +71,47 @@ public class AbstractRequest implements Request {
         this.methodName = methodName;
     }
 
-    @Override
-    public Object[] getArgs() {
-        return args;
-    }
 
     public void setArgs(Object[] args) {
         this.args = args;
+        if (args==null||args.length==0) {
+            paramClassNames=null;
+            return ;
+        }
+        paramClassNames=new ArrayList<>();
+        paramContents=new ArrayList<>();
+        for (int i = 0; i < args.length; i++) {
+            if (args[i]==null) throw new IllegalArgumentException("args can not be null! index :"+i);
+            paramClassNames.add(args[i].getClass().getName());
+            paramContents.add(JSON.toJSONString(args[i]));
+        }
+    }
+
+    public List<String> getParamClassNames() {
+        return paramClassNames;
+    }
+
+    public void setParamClassNames(List<String> paramClassNames) {
+        this.paramClassNames = paramClassNames;
+    }
+
+    @Override
+    public Object[] getArgs() {
+        if (paramClassNames==null) return null;
+        Class<?>[] paramClassType = getParamClassType();
+        Object[] objects=new Object[paramClassNames.size()];
+        for (int i = 0; i < paramClassType.length; i++) {
+            objects[i]=JSON.parseObject(paramContents.get(i), paramClassType[i]);
+        }
+        return objects;
+    }
+
+    public List<String> getParamContents() {
+        return paramContents;
+    }
+
+    public void setParamContents(List<String> paramContents) {
+        this.paramContents = paramContents;
     }
 
     @Override
@@ -69,6 +120,8 @@ public class AbstractRequest implements Request {
                 "itfName='" + itfName + '\'' +
                 ", methodName='" + methodName + '\'' +
                 ", args=" + Arrays.toString(args) +
+                ", paramContents=" + paramContents +
+                ", paramClassNames=" + paramClassNames +
                 '}';
     }
 }

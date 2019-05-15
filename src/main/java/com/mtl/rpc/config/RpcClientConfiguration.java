@@ -115,6 +115,14 @@ public class RpcClientConfiguration implements ApplicationListener<ContextRefres
         this.serverSelector = serverSelector;
     }
 
+    public int getSynRedisSecond() {
+        return synRedisSecond;
+    }
+
+    public void setSynRedisSecond(int synRedisSecond) {
+        this.synRedisSecond = synRedisSecond;
+    }
+
     private static class SynRedisTimerTask extends TimerTask{
         @Override
         public void run() {
