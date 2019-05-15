@@ -47,7 +47,7 @@ public class User {
     <property name="registCenterConfig" ref="redisRegistCenterConfig"/>
     <!-- 接口所在的包名 -->
     <property name="basePachage" value="com.mtl.rpc.demo.service"/>
-    <!-- 客户端每30秒回去服务注册中心获取最新的服务列表，默认为60S -->
+    <!-- 客户端每30秒会去服务注册中心获取最新的服务列表，默认为60S -->
     <property name="synRedisSecond" value="30" />
  </bean>
     <!-- redis注册中心配置类 -->
